@@ -1,0 +1,45 @@
+- name: Configure server
+  hosts: servers
+  become: true
+
+  vars:
+    user_name: student
+
+  tasks:
+    - name: Create user
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        shell: /bin/bash
+        create_home: true
+        groups: sudo
+        append: true
+
+    - name: Add SSH public key
+      ansible.posix.authorized_key:
+        user: "{{ user_name }}"
+        key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
+
+    - name: Disable password authentication
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/99-ansible.conf
+        content: |
+          PasswordAuthentication no
+          PubkeyAuthentication yes
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart SSH
+
+    - name: Create directory
+      ansible.builtin.file:
+        path: "/opt/{{ user_name }}"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+        mode: '0660'
+
+  handlers:
+    - name: Restart SSH
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
