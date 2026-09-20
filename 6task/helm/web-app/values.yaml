@@ -1,0 +1,12 @@
+replicaCount: 2
+
+image:
+  repository: web-app
+  tag: local
+  pullPolicy: Never
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources: {}
