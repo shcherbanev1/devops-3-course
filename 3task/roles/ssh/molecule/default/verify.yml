@@ -1,0 +1,32 @@
+- name: Verify
+  hosts: instance
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check SSH configuration file
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d/99-ansible.conf
+      register: ssh_config
+
+    - name: Assert SSH configuration file exists
+      ansible.builtin.assert:
+        that:
+          - ssh_config.stat.exists
+          - ssh_config.stat.isreg
+
+    - name: Read SSH configuration
+      ansible.builtin.slurp:
+        src: /etc/ssh/sshd_config.d/99-ansible.conf
+      register: ssh_config_content
+
+    - name: Assert SSH configuration
+      ansible.builtin.assert:
+        that:
+          - "'PasswordAuthentication no' in (ssh_config_content.content | b64decode)"
+          - "'PubkeyAuthentication yes' in (ssh_config_content.content | b64decode)"
+
+    - name: Validate SSH configuration
+      ansible.builtin.command:
+        cmd: sshd -t
+      changed_when: false

@@ -1,0 +1,46 @@
+---
+- name: Verify
+  hosts: instance
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check that student exists
+      ansible.builtin.getent:
+        database: passwd
+        key: student
+
+    - name: Check that student has sudo group
+      ansible.builtin.command: id -nG student
+      register: student_groups
+      changed_when: false
+
+    - name: Assert student is in sudo group
+      ansible.builtin.assert:
+        that:
+          - "'sudo' in student_groups.stdout.split()"
+
+    - name: Check SSH authorized key
+      ansible.posix.authorized_key:
+        user: student
+        key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
+        state: present
+      check_mode: true
+      register: ssh_key_check
+
+    - name: Assert SSH key is present
+      ansible.builtin.assert:
+        that:
+          - not ssh_key_check.changed
+
+    - name: Check user directory
+      ansible.builtin.stat:
+        path: /opt/student
+      register: student_dir
+
+    - name: Assert user directory exists
+      ansible.builtin.assert:
+        that:
+          - student_dir.stat.exists
+          - student_dir.stat.isdir
+          - student_dir.stat.mode == '0660'

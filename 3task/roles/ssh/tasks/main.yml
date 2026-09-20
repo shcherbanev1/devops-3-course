@@ -1,0 +1,10 @@
+- name: Configure SSH authentication
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/99-ansible.conf
+    content: |
+      PasswordAuthentication no
+      PubkeyAuthentication yes
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart SSH

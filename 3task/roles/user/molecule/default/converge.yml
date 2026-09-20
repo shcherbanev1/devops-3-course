@@ -1,0 +1,13 @@
+- name: Converge
+  hosts: all
+  become: true
+
+  vars:
+    users:
+      - name: student
+        ssh_key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
+
+  tasks:
+    - name: Include user role
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/../.."

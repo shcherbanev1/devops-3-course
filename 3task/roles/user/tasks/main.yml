@@ -1,0 +1,23 @@
+- name: Create users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: /bin/bash
+    create_home: true
+    groups: sudo
+    append: true
+  loop: "{{ users }}"
+
+- name: Add SSH public keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_key }}"
+  loop: "{{ users }}"
+
+- name: Create user directories
+  ansible.builtin.file:
+    path: "/opt/{{ item.name }}"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: '0660'
+  loop: "{{ users }}"

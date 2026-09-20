@@ -1,0 +1,17 @@
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: instance
+    image: ubuntu:24.04
+    command: sleep infinity
+    privileged: true
+
+provisioner:
+  name: ansible
+
+verifier:
+  name: ansible
